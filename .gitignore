@@ -1,0 +1,16 @@
+# Ignore model files (too big for GitHub)
+*.safetensors
+*.bin
+*.json
+!manifest.json
+!config.json
+!generation_config.json
+!tokenizer.json
+!tokenizer_config.json
+
+# Ignore the subfolder created by the clone
+AI-web-Assistant/
+
+# Ignore Python cache
+__pycache__/
+*.pyc

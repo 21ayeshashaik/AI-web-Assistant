@@ -1,0 +1,123 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    /* Modern Font and Clean Background */
+    body { 
+      width: 480px; 
+      margin: 0; 
+      padding: 24px; 
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; 
+      background-color: #fcfcfd; 
+      color: #111827; 
+    }
+    
+    /* Header Typography */
+    .header { text-align: center; margin-bottom: 24px; }
+    h3 { margin: 0 0 6px 0; font-size: 24px; font-weight: 700; color: #111827; letter-spacing: -0.5px; }
+    .subtitle { margin: 0; font-size: 14px; color: #6b7280; }
+    
+    /*Buttons */
+    .button-container { display: flex; gap: 12px; margin-bottom: 20px; }
+    button { 
+      flex: 1; 
+      padding: 14px 10px; 
+      border: none; 
+      border-radius: 10px; 
+      font-size: 14px; 
+      font-weight: 600; 
+      cursor: pointer; 
+      transition: all 0.2s ease; 
+      color: #fff; 
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); 
+    }
+    button:hover { 
+      transform: translateY(-2px); 
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); 
+    }
+    button:active { transform: translateY(0); }
+    
+    #btn-sum { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); } /* Ocean Blue */
+    #btn-flash { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); } /* Deep Purple */
+    #btn-mcq { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); } /* Sunset Orange */
+    
+    /* Loader Spinner */
+    #loader { display: none; text-align: center; font-size: 14px; margin-bottom: 20px; color: #3b82f6; font-weight: 500; }
+    .spinner { 
+      border: 3px solid rgba(59, 130, 246, 0.2); 
+      border-top: 3px solid #3b82f6; 
+      border-radius: 50%; 
+      width: 18px; 
+      height: 18px; 
+      animation: spin 1s linear infinite; 
+      display: inline-block; 
+      vertical-align: middle; 
+      margin-right: 8px; 
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    
+    /* Result Box Layout */
+    .result-wrapper { 
+      background: #ffffff; 
+      border-radius: 12px; 
+      border: 1px solid #e5e7eb; 
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); 
+      overflow: hidden; 
+      display: flex; 
+      flex-direction: column; 
+    }
+    .result-header { 
+      padding: 12px 16px; 
+      background: #f9fafb; 
+      border-bottom: 1px solid #e5e7eb; 
+      font-size: 12px; 
+      font-weight: 700; 
+      color: #6b7280; 
+      text-transform: uppercase; 
+      letter-spacing: 0.5px; 
+    }
+    
+    /* Scrollable Text Area */
+    #result { 
+      padding: 16px; 
+      margin: 0; 
+      font-size: 14.5px; 
+      line-height: 1.6; 
+      color: #374151; 
+      min-height: 120px; 
+      max-height: 320px; 
+      overflow-y: auto; 
+      white-space: pre-wrap; 
+    }
+    
+    /* Minimalist Custom Scrollbar */
+    #result::-webkit-scrollbar { width: 6px; }
+    #result::-webkit-scrollbar-track { background: transparent; }
+    #result::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+    #result::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h3>AI Web Assistant</h3>
+    <p class="subtitle">Summarize, generate flashcards, and create quizzes.</p>
+  </div>
+  
+  <div class="button-container">
+    <button id="btn-sum">Web Summary</button>
+    <button id="btn-flash">Flashcards</button>
+    <button id="btn-mcq">MCQ Gen</button>
+  </div>
+  
+  <div id="loader"><div class="spinner"></div> Scanning webpage & thinking...</div>
+  
+  <div class="result-wrapper">
+    <div class="result-header" id="result-label">Output</div>
+    <div id="result">Click a button above to scan this webpage and generate content.</div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

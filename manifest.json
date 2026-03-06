@@ -1,0 +1,15 @@
+
+
+{
+  "manifest_version": 3,
+  "name": "AI Web Assistant",
+  "version": "2.0",
+  "description": "Reads webpages to generate Summaries, Flashcards, and MCQs.",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ]
+}
