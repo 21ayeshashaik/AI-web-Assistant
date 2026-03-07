@@ -1,123 +1,456 @@
-
-
 <!DOCTYPE html>
 <html>
+
 <head>
+  <meta charset="UTF-8">
   <style>
-    /* Modern Font and Clean Background */
-    body { 
-      width: 480px; 
-      margin: 0; 
-      padding: 24px; 
-      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; 
-      background-color: #fcfcfd; 
-      color: #111827; 
+    /* Premium Design System & Tokens */
+    :root {
+      --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+      --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%);
+      --bg-gradient: radial-gradient(circle at top left, #f8fafc, #f1f5f9);
+      --text-main: #1e293b;
+      --text-sub: #64748b;
+      --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+      --shadow-deep: 0 10px 30px -5px rgba(99, 102, 241, 0.2);
     }
-    
-    /* Header Typography */
-    .header { text-align: center; margin-bottom: 24px; }
-    h3 { margin: 0 0 6px 0; font-size: 24px; font-weight: 700; color: #111827; letter-spacing: -0.5px; }
-    .subtitle { margin: 0; font-size: 14px; color: #6b7280; }
-    
-    /*Buttons */
-    .button-container { display: flex; gap: 12px; margin-bottom: 20px; }
-    button { 
-      flex: 1; 
-      padding: 14px 10px; 
-      border: none; 
-      border-radius: 10px; 
-      font-size: 14px; 
-      font-weight: 600; 
-      cursor: pointer; 
-      transition: all 0.2s ease; 
-      color: #fff; 
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); 
+
+    /* Global Reset */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      margin: 0;
+      padding: 0;
     }
-    button:hover { 
-      transform: translateY(-2px); 
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); 
+
+    html {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: var(--bg-gradient);
+      overflow: hidden !important;
     }
-    button:active { transform: translateY(0); }
-    
-    #btn-sum { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); } /* Ocean Blue */
-    #btn-flash { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); } /* Deep Purple */
-    #btn-mcq { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); } /* Sunset Orange */
-    
-    /* Loader Spinner */
-    #loader { display: none; text-align: center; font-size: 14px; margin-bottom: 20px; color: #3b82f6; font-weight: 500; }
-    .spinner { 
-      border: 3px solid rgba(59, 130, 246, 0.2); 
-      border-top: 3px solid #3b82f6; 
-      border-radius: 50%; 
-      width: 18px; 
-      height: 18px; 
-      animation: spin 1s linear infinite; 
-      display: inline-block; 
-      vertical-align: middle; 
-      margin-right: 8px; 
+
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      min-width: 450px;
+      /* Secure bounds for the browser bar popup */
+      min-height: 550px;
+      font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: var(--text-main);
+      overflow: hidden !important;
+      background: transparent;
     }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    
-    /* Result Box Layout */
-    .result-wrapper { 
-      background: #ffffff; 
-      border-radius: 12px; 
-      border: 1px solid #e5e7eb; 
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); 
-      overflow: hidden; 
-      display: flex; 
-      flex-direction: column; 
+
+    button {
+      outline: none !important;
     }
-    .result-header { 
-      padding: 12px 16px; 
-      background: #f9fafb; 
-      border-bottom: 1px solid #e5e7eb; 
-      font-size: 12px; 
-      font-weight: 700; 
-      color: #6b7280; 
-      text-transform: uppercase; 
-      letter-spacing: 0.5px; 
+
+    /* Main Card Container */
+    #main-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      /* Removed box-shadow to prevent scrollbar triggering */
     }
-    
-    /* Scrollable Text Area */
-    #result { 
-      padding: 16px; 
-      margin: 0; 
-      font-size: 14.5px; 
-      line-height: 1.6; 
-      color: #374151; 
-      min-height: 120px; 
-      max-height: 320px; 
-      overflow-y: auto; 
-      white-space: pre-wrap; 
+
+    /* Close Button */
+    .close-btn {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(4px);
+      border: none;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      font-size: 13px;
+      color: var(--text-sub);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow-soft);
+      z-index: 10;
+      flex-shrink: 0;
     }
-    
-    /* Minimalist Custom Scrollbar */
-    #result::-webkit-scrollbar { width: 6px; }
-    #result::-webkit-scrollbar-track { background: transparent; }
-    #result::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
-    #result::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+    .close-btn:hover {
+      background: #f43f5e;
+      color: white;
+      transform: rotate(90deg) scale(1.1);
+    }
+
+    /* Fixed Header */
+    .popup-header {
+      padding: 22px 24px 0;
+      flex-shrink: 0;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    h3 {
+      font-size: 24px;
+      font-weight: 800;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-sub);
+    }
+
+    /* Tabs */
+    .tabs-container {
+      display: flex;
+      background: rgba(226, 232, 240, 0.6);
+      backdrop-filter: blur(8px);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 16px;
+      border: none;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px 0;
+      border: none;
+      background: transparent;
+      color: var(--text-sub);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      border-radius: 9px;
+      transition: all 0.3s ease;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+    }
+
+    .tab-btn.active {
+      background: white;
+      color: #6366f1;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Generate Button */
+    .action-container {
+      margin-bottom: 16px;
+    }
+
+    .generate-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary-gradient);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow-deep);
+    }
+
+    .generate-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 36px -8px rgba(99, 102, 241, 0.4);
+    }
+
+    .generate-btn:active {
+      transform: translateY(0);
+    }
+
+    /* Loader */
+    #loader {
+      display: none;
+      text-align: center;
+      font-size: 13px;
+      margin-bottom: 16px;
+      color: #6366f1;
+      font-weight: 600;
+      animation: pulse 2s infinite ease-in-out;
+      flex-shrink: 0;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 0.7;
+      }
+
+      50% {
+        opacity: 1;
+      }
+    }
+
+    .spinner {
+      border: 3px solid rgba(99, 102, 241, 0.1);
+      border-top: 3px solid #6366f1;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 10px;
+    }
+
+    @keyframes spin {
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* THE SCROLLABLE CONTENT AREA */
+    #scroll-area {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 0 20px 20px;
+      margin-top: 10px;
+
+      /* HIDE ALL SCROLLBARS EVERYWHERE */
+      -ms-overflow-style: none;
+      /* IE, Edge */
+      scrollbar-width: none;
+      /* Firefox */
+    }
+
+    #scroll-area::-webkit-scrollbar {
+      display: none !important;
+      /* Chrome, Safari, Opera */
+    }
+
+    /* Summary Result Box */
+    #result {
+      background: white;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.8;
+      color: var(--text-main);
+      white-space: pre-wrap;
+      padding: 18px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    /* Quiz */
+    #quiz-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .mcq-block {
+      width: 100%;
+      background: white;
+      padding: 18px;
+      border-radius: 14px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .mcq-question {
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 14px;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+
+    .mcq-option {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 11px 14px;
+      margin-bottom: 8px;
+      background: #f8fafc;
+      border: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .mcq-option:hover:not(:disabled) {
+      background: #fff;
+      transform: translateX(3px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+    }
+
+    .mcq-option.correct {
+      background: #f0fdf4 !important;
+      color: #15803d !important;
+    }
+
+    .mcq-option.wrong {
+      background: #fef2f2 !important;
+      color: #be123c !important;
+    }
+
+    .mcq-feedback {
+      display: block;
+      margin-top: 8px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .mcq-feedback.correct {
+      color: #15803d;
+    }
+
+    .mcq-feedback.wrong {
+      color: #be123c;
+    }
+
+    /* Flashcards */
+    #flashcard-container {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .flashcard {
+      width: 100%;
+      perspective: 1200px;
+      height: 220px;
+      /* Fixed tall height */
+      flex-shrink: 0;
+      /* Never compress in flex */
+      cursor: pointer;
+    }
+
+    .flashcard-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transform-style: preserve-3d;
+    }
+
+    .flashcard.flipped .flashcard-inner {
+      transform: rotateY(180deg);
+    }
+
+    .flashcard-front,
+    .flashcard-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 28px;
+      border-radius: 20px;
+      text-align: center;
+      font-size: 16px;
+      box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.1);
+    }
+
+    .flashcard-front {
+      background: white;
+      color: var(--text-main);
+      font-weight: 800;
+    }
+
+    .flashcard-back {
+      background: var(--primary-gradient);
+      color: white;
+      transform: rotateY(180deg);
+      font-weight: 600;
+      line-height: 1.6;
+      box-shadow: var(--shadow-deep);
+    }
+
+    .flashcard-hint {
+      position: absolute;
+      bottom: 12px;
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      opacity: 0.45;
+    }
+
+    .flashcard-front .flashcard-hint {
+      color: var(--text-sub);
+    }
+
+    .flashcard-back .flashcard-hint {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    /* Header h3 redundant rule kept for safety */
+    .header h3 {
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
   </style>
 </head>
+
 <body>
-  <div class="header">
-    <h3>AI Web Assistant</h3>
-    <p class="subtitle">Summarize, generate flashcards, and create quizzes.</p>
-  </div>
-  
-  <div class="button-container">
-    <button id="btn-sum">Web Summary</button>
-    <button id="btn-flash">Flashcards</button>
-    <button id="btn-mcq">MCQ Gen</button>
-  </div>
-  
-  <div id="loader"><div class="spinner"></div> Scanning webpage & thinking...</div>
-  
-  <div class="result-wrapper">
-    <div class="result-header" id="result-label">Output</div>
-    <div id="result">Click a button above to scan this webpage and generate content.</div>
+  <div id="main-container">
+    <button id="btn-close" class="close-btn" title="Close Extension">&#10006;</button>
+
+    <!-- Fixed Header Section -->
+    <div class="popup-header">
+      <div class="header">
+        <h3>AI Web Assistant</h3>
+        <p class="subtitle">Summarize, generate flashcards, and create quizzes.</p>
+      </div>
+
+      <div class="tabs-container">
+        <button class="tab-btn active" data-task="summarize">Summarize</button>
+        <button class="tab-btn" data-task="flashcards">Flashcards</button>
+        <button class="tab-btn" data-task="mcq">Quiz</button>
+      </div>
+
+      <div class="action-container">
+        <button id="btn-generate" class="generate-btn">Generate Web Summary</button>
+      </div>
+
+      <div id="loader">
+        <div class="spinner"></div> Scanning webpage &amp; thinking...
+      </div>
+    </div>
+
+    <!-- Scrollable Content Area -->
+    <div id="scroll-area">
+      <div id="result">Click a button above to scan this webpage and generate content.</div>
+
+      <!-- QUIZ & FLASHCARD CONTAINERS -->
+      <div id="quiz-container" style="display: none;"></div>
+      <div id="flashcard-container" style="display: none;"></div>
+    </div>
   </div>
 
   <script src="popup.js"></script>
 </body>
+
 </html>
