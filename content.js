@@ -40,7 +40,9 @@ Object.assign(iframeContainer.style, {
     backgroundColor: 'transparent',
     zIndex: '2147483647',
     display: 'none',
-    overflow: 'visible'
+    overflow: 'hidden',
+    borderRadius: '16px',
+    boxShadow: '0 10px 40px -10px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 0, 0, 0.05)'
 });
 
 // Create the iframe

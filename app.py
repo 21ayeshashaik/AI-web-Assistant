@@ -72,7 +72,6 @@ current_model = None
 current_tokenizer = None
 current_task_type = None # Track if we have 'main' or 'mcq' loaded
 
-# --- CONFIGURATION: Set your paths here ---
 PATH_MAIN = "prem415/my-chrome-summarizer"  
 # Pull safely from Hugging Face Cloud
 PATH_MCQ = "Minnu21/my-chrome-mcqmodel" 
@@ -104,10 +103,8 @@ def load_model(task_type):
     current_task_type = task_type
     print(f"--- {task_type.upper()} model loaded successfully on {device.upper()}! ---")
 
-# =========================
-# MCQ Helper Functions
-# =========================
-def clean_and_validate_mcq(mcq_text):
+
+def clean_and_validate_mcq(mcq_text, distractors_pool=[]):
     try:
         question = ""
         options = []
@@ -124,7 +121,12 @@ def clean_and_validate_mcq(mcq_text):
             return None
             
         # Filter out AI hallucinations about "MCQ formats"
-        bad_phrases = ["multiple choice question", "how many options", "what is the answer", "what is multiple choice"]
+        bad_phrases = [
+            "multiple choice", "how many option", "what is the answer", 
+            "meaningful option", "meaningful options", "correct answer",
+            "four meaningful", "4 meaningful", "how many correct",
+            "generate a"
+        ]
         for bad in bad_phrases:
             if bad in question.lower():
                 return None
@@ -139,48 +141,97 @@ def clean_and_validate_mcq(mcq_text):
         if "answer:" in mcq_text.lower():
             answer = mcq_text.split("answer:", 1)[1].strip()
 
+        # Ensure answer exists
+        answer = answer.strip('.,;:"!?()[]{}\\/ \t\n\r')
+        if not answer:
+            return None
+
+        # Smart Helper for Deduplication
+        import difflib
+        def get_base(s):
+            s = str(s).lower().strip('.,;:"!?()[]{}\\/ \t\n\r')
+            for prefix in ["the ", "a ", "an "]:
+                if s.startswith(prefix):
+                    return s[len(prefix):]
+            return s
+            
+        def are_similar(s1, s2):
+            b1 = get_base(s1)
+            b2 = get_base(s2)
+            if b1 == b2: return True
+            if len(b1) > 3 and len(b2) > 3:
+                # Catch "DBMS" vs "Database Management System (DBMS)"
+                if b1 in b2 or b2 in b1: return True
+                # Catch slight typos
+                if difflib.SequenceMatcher(None, b1, b2).ratio() > 0.85: return True
+            return False
+
         clean_options = []
         for opt in options:
-            opt = opt.strip()
-            if opt.lower() in ["response:", "and", "successful", ""]:
+            opt = opt.strip('.,;:"!?()[]{}\\/ \t\n\r')
+            
+            # More aggressive drop list for standalone prepositions and random AI artifacts
+            bad_words = [
+                "response", "response:", "and", "successful", "", "the", "a", "an", "data",
+                "to", "for", "as", "is", "of", "in", "it", "on", "by", "at", "or", "but", "if", "be", "so"
+            ]
+            
+            if opt.lower() in bad_words:
                 continue
             if len(opt) < 2:
                 continue
             clean_options.append(opt)
 
-        clean_options = list(dict.fromkeys(clean_options))
+        final_clean_options = []
         
-        # If the model didn't even generate at least 2 real options, reject it
-        if len(clean_options) < 2:
-            return None
+       
+        final_clean_options.append(answer)
+        
+        for opt in clean_options:
+            is_dup = False
+            for f_opt in final_clean_options:
+                if are_similar(opt, f_opt):
+                    is_dup = True
+                    break
+            if not is_dup:
+                final_clean_options.append(opt)
+                
+        # Smart NLP Distractors
+        if len(final_clean_options) < 4 and distractors_pool:
+            import random
+            random.shuffle(distractors_pool)
+            for d in distractors_pool:
+                is_dup = False
+                for f_opt in final_clean_options:
+                    if are_similar(d, f_opt):
+                        is_dup = True
+                        break
+                if not is_dup:
+                    final_clean_options.append(d)
+                if len(final_clean_options) == 4:
+                    break
 
-        # Auto add filler options if less than 4
-        filler = [
-            "All of the above",
-            "None of the above",
-            "Both A and B",
-            "Only A"
-        ]
-
-        # Use index carefully
+        # Fallback filler
+        filler = ["All of the above", "None of the above", "Both A and B", "Only A"]
         filler_idx = 0
-        while len(clean_options) < 4 and filler_idx < len(filler):
-            if filler[filler_idx] not in clean_options:
-                clean_options.append(filler[filler_idx])
+        while len(final_clean_options) < 4 and filler_idx < len(filler):
+            is_dup = False
+            for f_opt in final_clean_options:
+                if are_similar(filler[filler_idx], f_opt):
+                    is_dup = True
+                    break
+            if not is_dup:
+                final_clean_options.append(filler[filler_idx])
             filler_idx += 1
 
-        clean_options = clean_options[:4]
-
-        # Ensure answer exists
-        if not answer:
-            return None
-            
-        if answer not in clean_options:
-            clean_options[0] = answer
+        final_clean_options = final_clean_options[:4]
+        
+        import random
+        random.shuffle(final_clean_options)
 
         return {
             "question": question,
-            "options": clean_options,
+            "options": final_clean_options,
             "answer": answer
         }
 
@@ -202,6 +253,42 @@ def process_text():
 
         if task in ["mcq", "flashcards"]:
             load_model("mcq")
+            
+            # --- NLP Distractor Setup (Smart Logic) ---
+            distractors_pool = []
+            try:
+                # Fallback to pure regex extraction for Python 3.14 compatibility
+                # 1. Grab Capitalized Phrases (Entities, Topics, Proper Nouns)
+                capitalized_phrases = re.findall(r'\b[A-Z][a-z]+(?: [A-Z][a-z]+)+\b', safe_text)
+                
+                # 2. Grab important common words
+                words = re.findall(r'\b[a-zA-Z]{5,15}\b', safe_text.lower())
+                from collections import Counter
+                common_words = [w for w, c in Counter(words).most_common(50)]
+                
+                # Combine and filter
+                raw_pool = capitalized_phrases + [w.capitalize() for w in common_words]
+                
+                # Strict Stopwords
+                stops = ["these", "those", "their", "there", "which", "would", "could", "should", "other", "about", "after", "where", "while", "under"]
+                
+                for term in raw_pool:
+                    c_text = term.strip()
+                    if 3 < len(c_text) < 30 and "\n" not in c_text:
+                        if c_text.lower() in stops: continue
+                        if c_text.lower().startswith("the "): c_text = c_text[4:]
+                        elif c_text.lower().startswith("a "): c_text = c_text[2:]
+                        elif c_text.lower().startswith("an "): c_text = c_text[3:]
+                        
+                        c_text = c_text.capitalize()
+                        if c_text not in distractors_pool and c_text.lower() != "all of the above":
+                            distractors_pool.append(c_text)
+                            
+                import random
+                random.shuffle(distractors_pool)
+            except Exception as e:
+                print("Regex Distractor extraction failed:", e)
+            # ----------------------------------------
             
             # Split the raw website text into sentences
             sentences = re.split(r'[.!?]', safe_text)
@@ -228,6 +315,7 @@ def process_text():
                         inputs,
                         max_length=256,
                         num_beams=4,
+                        do_sample=True,
                         temperature=0.8,
                         top_p=0.9,
                         repetition_penalty=2.0,
@@ -236,7 +324,7 @@ def process_text():
                 
                 result = current_tokenizer.decode(outputs[0], skip_special_tokens=True)
                 
-                cleaned = clean_and_validate_mcq(result)
+                cleaned = clean_and_validate_mcq(result, distractors_pool)
                 if cleaned:
                     if not any(mq['question'] == cleaned['question'] for mq in valid_mcqs):
                         valid_mcqs.append(cleaned)
